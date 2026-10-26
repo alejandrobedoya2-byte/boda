@@ -42,7 +42,7 @@
 .acciones .boton { width: 100%; }
 
 /* Finales */
-.brindis { width: 200px; }
+.retrato { width: 200px; }
 .datos { width: 100%; text-align: left; }
 .datos .aviso { margin-top: var(--espacio-1); }
 .final .acciones { width: 100%; max-width: 320px; }
