@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Karo &amp; Ale · 05.12.2026</title>
+<link rel="stylesheet" href="sistema/sistema.css">
+<link rel="stylesheet" href="pagina.css">
+<!-- Prototipo 12 · pantalla por pantalla: una pregunta por pantalla y como mucho dos botones, pensado también para
+     personas mayores. Si van: quiénes vienen (grupos), alergias y confirmado con los detalles. Si no: gracias por
+     avisar. El botón «atrás» del teléfono vuelve a la pantalla anterior. Escenarios: README del proyecto. -->
+</head>
+<body>
+
+<!-- 1 · Invitación -->
+<section class="pantalla centrada" data-pantalla="invitacion">
+  <div class="junto">
+    <p>Karo &amp; Ale</p>
+    <h1 class="display">¡Nos casamos!</h1>
+  </div>
+  <figure class="escena">
+    <img class="ilustracion" src="ilustraciones/pareja.webp" width="1024" height="1536"
+         alt="Ilustración de los novios abrazados, con sus perros Oni y Lilo, entre flores.">
+  </figure>
+  <div class="junto">
+    <p class="titulo">Sábado 5 de diciembre · 7:30 p. m.</p>
+    <p><a data-mapa target="_blank" rel="noopener">Museo Larco Café-Restaurant</a></p>
+    <p class="nota">Ingreso por calle Navarra 169</p>
+  </div>
+  <div class="texto">
+    <p>Estamos muy felices de comenzar esta nueva etapa juntos y nos encantaría compartir este momento tan especial con ustedes.</p>
+    <p>Por eso, queremos invitarlos a celebrar nuestro matrimonio civil con una linda cena, rodeados de las personas que más queremos.</p>
+  </div>
+  <div class="pregunta" id="pregunta" aria-live="polite"></div>
+</section>
+
+<!-- 2 · Quiénes vienen (solo invitaciones de dos o más) -->
+<section class="pantalla paso" data-pantalla="quienes" hidden>
+  <div class="encabezado-paso">
+    <p class="nota">Paso 1 de 2</p>
+    <h2 class="titulo">¿Quiénes vienen?</h2>
+    <p class="nota">Desmarca a quien no pueda ir.</p>
+  </div>
+  <div id="casillas"></div>
+  <div class="acciones">
+    <p class="nota" id="error-quienes" role="alert" hidden></p>
+    <button class="boton boton-principal" type="button" data-accion="continuar" id="continuar">Continuar</button>
+    <button class="boton boton-secundario" type="button" data-accion="volver">Volver</button>
+  </div>
+</section>
+
+<!-- 3 · Alergias -->
+<section class="pantalla paso" data-pantalla="alergias" hidden>
+  <div class="encabezado-paso">
+    <p class="nota" id="paso-alergias">Paso 2 de 2</p>
+    <h2 class="titulo" id="titulo-alergias">¿Alguna alergia alimentaria?</h2>
+    <p class="nota">Si no hay, se deja en blanco.</p>
+  </div>
+  <div class="campos" id="campos"></div>
+  <div class="acciones">
+    <p class="nota" id="error-alergias" role="alert" hidden></p>
+    <button class="boton boton-principal" type="button" data-accion="confirmar">Confirmar asistencia</button>
+    <button class="boton boton-secundario" type="button" data-accion="volver">Volver</button>
+  </div>
+</section>
+
+<!-- 4 · Confirmado, con los detalles -->
+<section class="pantalla centrada final" data-pantalla="confirmado" hidden>
+  <div class="junto">
+    <h2 class="display">¡Gracias!</h2>
+    <p class="titulo" id="frase-confirmado"></p>
+    <p class="nota" id="alergias-confirmado" hidden></p>
+  </div>
+  <figure class="brindis">
+    <img class="ilustracion" src="ilustraciones/brindis.webp" width="1122" height="1402" alt="">
+  </figure>
+  <dl class="tarjeta datos" id="datos"></dl>
+  <div class="texto">
+    <p>¡Nos hace mucha ilusión compartir esta noche con ustedes y celebrar juntos el comienzo de esta nueva aventura!</p>
+  </div>
+  <div class="junto">
+    <p class="nota">Con mucho cariño,</p>
+    <p class="display">Karo &amp; Ale</p>
+  </div>
+  <div class="acciones">
+    <button class="boton boton-secundario" type="button" data-accion="cambiar">Cambiar mi respuesta</button>
+    <p class="nota" data-cerrado hidden>El plazo para cambiar la respuesta cerró el viernes 6 de noviembre.</p>
+  </div>
+</section>
+
+<!-- 4 · No van -->
+<section class="pantalla centrada final" data-pantalla="no-van" hidden>
+  <div class="junto">
+    <h2 class="display">Gracias por avisar</h2>
+    <p class="titulo" id="frase-no-van"></p>
+  </div>
+  <div class="junto">
+    <p class="nota">Con mucho cariño,</p>
+    <p class="display">Karo &amp; Ale</p>
+  </div>
+  <div class="acciones">
+    <button class="boton boton-secundario" type="button" data-accion="cambiar">Cambiar mi respuesta</button>
+    <p class="nota" data-cerrado hidden>El plazo para cambiar la respuesta cerró el viernes 6 de noviembre.</p>
+  </div>
+</section>
+
+<script src="invitacion.js"></script>
+<script>
+  document.querySelectorAll('[data-mapa]').forEach((a) => { a.href = MAPA; });
+  dibujarDetalles(document.getElementById('datos'));
+
+  let invitacion = null;
+  let carga = 'cargando'; // cargando, sin-enlace, no-encontrada, sin-conexion o lista
+  let recienCerrado = false;
+  let borrador = null; // lo que se va eligiendo en los pasos, antes de confirmar
+  let enviando = false;
+
+  const pantallas = [...document.querySelectorAll('[data-pantalla]')];
+  const uno = () => invitacion.invitados.length === 1;
+  const segun = (paraUno, paraVarios) => (uno() ? paraUno : paraVarios);
+  const respondieron = () => invitacion.invitados.some((p) => p.viene);
+  const van = () => invitacion.invitados.filter((p) => p.viene === 'si');
+
+  // Pantallas y botón «atrás»: cada paso es una entrada en la historia del navegador. Al guardar, la historia
+  // vuelve a la primera entrada y ahí se muestra el resultado, para que «atrás» no reabra los pasos ya enviados.
+  let profundidad = 0;
+  let destinoAlVolver = null;
+  // El desplazamiento lo decide la página: cada pantalla empieza arriba, y al volver a la invitación se va a la pregunta
+  history.scrollRestoration = 'manual';
+
+  function pantallaInicial() {
+    if (carga !== 'lista' || !respondieron()) return 'invitacion';
+    return van().length ? 'confirmado' : 'no-van';
+  }
+
+  function mostrar(nombre, { aLaPregunta = false } = {}) {
+    pantallas.forEach((p) => { p.hidden = p.dataset.pantalla !== nombre; });
+    ({ invitacion: pintarPregunta, quienes: pintarQuienes, alergias: pintarAlergias, confirmado: pintarConfirmado, 'no-van': pintarNoVan })[nombre]();
+    if (aLaPregunta && nombre === 'invitacion') document.getElementById('pregunta').scrollIntoView({ block: 'center' });
+    else window.scrollTo(0, 0);
+  }
+
+  function ir(nombre) {
+    profundidad++;
+    history.pushState({ pantalla: nombre, n: profundidad }, '');
+    mostrar(nombre, { aLaPregunta: true });
+  }
+
+  function terminar(nombre) {
+    if (profundidad) {
+      destinoAlVolver = nombre;
+      history.go(-profundidad);
+    } else {
+      history.replaceState({ pantalla: nombre, n: 0 }, '');
+      mostrar(nombre);
+    }
+  }
+
+  window.addEventListener('popstate', (e) => {
+    if (destinoAlVolver) {
+      const nombre = destinoAlVolver;
+      destinoAlVolver = null;
+      profundidad = 0;
+      history.replaceState({ pantalla: nombre, n: 0 }, '');
+      mostrar(nombre);
+      return;
+    }
+    profundidad = e.state?.n || 0;
+    const nombre = e.state?.pantalla || pantallaInicial();
+    // Los pasos solo tienen sentido con algo elegido; si no, se vuelve al comienzo
+    mostrar((nombre === 'quienes' || nombre === 'alergias') && !borrador ? pantallaInicial() : nombre, { aLaPregunta: true });
+  });
+
+  // 1 · La pregunta de la invitación, o el mensaje que corresponda
+  function pintarPregunta() {
+    const bloque = document.getElementById('pregunta');
+    const mensajes = {
+      cargando: 'Cargando tu invitación…',
+      'sin-enlace': 'Para confirmar, usa el enlace personal que te enviamos.',
+      'no-encontrada': 'No encontramos esta invitación. Revisa el enlace que te enviamos.',
+      'sin-conexion': 'No pudimos cargar tu invitación. Revisa tu conexión e inténtalo de nuevo.',
+    };
+    if (carga !== 'lista') {
+      bloque.innerHTML = `<p class="nota"></p>${carga === 'sin-conexion' ? '<button class="boton boton-secundario" type="button" data-accion="reintentar">Intentar de nuevo</button>' : ''}`;
+      bloque.querySelector('.nota').textContent = mensajes[carga];
+      return;
+    }
+    if (!invitacion.abierto) {
+      bloque.innerHTML = '<p class="titulo"></p><p class="nota"></p>';
+      bloque.querySelector('.titulo').textContent = recienCerrado ? 'El plazo para confirmar ya cerró.' : 'El plazo para confirmar cerró el viernes 6 de noviembre.';
+      bloque.querySelector('.nota').textContent = segun('Si igual quieres acompañarnos, avísanos directamente.', 'Si igual quieren acompañarnos, avísennos directamente.');
+      return;
+    }
+    bloque.innerHTML = `
+      <p class="titulo"></p>
+      <div class="botones">
+        <button class="boton boton-principal" type="button" data-accion="si"></button>
+        <button class="boton boton-secundario" type="button" data-accion="no"></button>
+      </div>
+      <p class="nota" id="error-pregunta" role="alert" hidden></p>
+      <p class="nota" data-plazo></p>`;
+    bloque.querySelector('.titulo').textContent = `${invitacion.grupo}, ¿nos ${segun('acompañas', 'acompañan')}?`;
+    bloque.querySelector('[data-accion="si"]').textContent = segun('Sí, ahí estaré', 'Sí, vamos');
+    bloque.querySelector('[data-accion="no"]').textContent = segun('No podré ir', 'No podremos');
+    bloque.querySelector('[data-plazo]').textContent = respondieron()
+      ? `${segun('Puedes', 'Pueden')} cambiar la respuesta hasta el viernes 6 de noviembre.`
+      : segun(
+          'Te agradeceremos que nos confirmes tu asistencia hasta el viernes 6 de noviembre. En caso de no recibir tu confirmación hasta esa fecha, entenderemos que no podrás acompañarnos en este día.',
+          'Les agradeceremos que nos confirmen su asistencia hasta el viernes 6 de noviembre. En caso de no recibir su confirmación hasta esa fecha, entenderemos que no podrán acompañarnos en este día.'
+        );
+  }
+
+  // 2 · Quiénes vienen: todos marcados la primera vez; al cambiar la respuesta, lo que habían elegido
+  function pintarQuienes() {
+    document.getElementById('error-quienes').hidden = true;
+    document.getElementById('casillas').replaceChildren(...invitacion.invitados.map((p, n) => {
+      const fila = document.createElement('label');
+      fila.className = 'casilla';
+      fila.innerHTML = '<input type="checkbox"><span></span>';
+      fila.querySelector('span').textContent = p.nombre;
+      const caja = fila.querySelector('input');
+      caja.checked = borrador.vienen.has(n);
+      caja.addEventListener('change', () => {
+        if (caja.checked) borrador.vienen.add(n); else borrador.vienen.delete(n);
+        rotularContinuar();
+      });
+      return fila;
+    }));
+    rotularContinuar();
+  }
+  function rotularContinuar() {
+    document.getElementById('continuar').textContent = borrador.vienen.size ? 'Continuar' : 'Nadie podrá ir';
+  }
+
+  // 3 · Alergias, solo de quienes vienen
+  function pintarAlergias() {
+    document.getElementById('error-alergias').hidden = true;
+    document.getElementById('paso-alergias').hidden = uno();
+    document.getElementById('titulo-alergias').textContent = segun('¿Tienes alguna alergia alimentaria?', '¿Alguna alergia alimentaria?');
+    document.getElementById('campos').replaceChildren(...invitacion.invitados.flatMap((p, n) => {
+      if (!borrador.vienen.has(n)) return [];
+      const campo = document.createElement('label');
+      campo.className = 'campo';
+      campo.innerHTML = '<span></span><input type="text" placeholder="Por ejemplo: maní, mariscos">';
+      const etiqueta = campo.querySelector('span');
+      const entrada = campo.querySelector('input');
+      etiqueta.textContent = p.nombre;
+      etiqueta.hidden = uno();
+      if (uno()) entrada.setAttribute('aria-label', 'Tus alergias alimentarias');
+      entrada.value = borrador.alergias[n];
+      entrada.addEventListener('input', () => { borrador.alergias[n] = entrada.value; });
+      return [campo];
+    }));
+  }
+
+  // 4 · Finales
+  function mostrarCierre(pantalla) {
+    pantalla.querySelector('[data-accion="cambiar"]').hidden = !invitacion.abierto;
+    pantalla.querySelector('[data-cerrado]').hidden = invitacion.abierto;
+  }
+
+  function pintarConfirmado() {
+    const si = invitacion.invitados.filter((p) => p.viene === 'si');
+    const no = invitacion.invitados.filter((p) => p.viene === 'no').map((p) => p.nombre);
+    document.getElementById('frase-confirmado').textContent = no.length
+      ? `Esperamos a ${unirNombres(si.map((p) => p.nombre))} y extrañaremos a ${unirNombres(no)}.`
+      : `${segun('Te', 'Los')} esperamos, ${invitacion.grupo}.`;
+    const conAlergias = si.filter((p) => p.alergias);
+    const alergias = document.getElementById('alergias-confirmado');
+    alergias.hidden = !conAlergias.length;
+    alergias.textContent = uno()
+      ? `Anotamos tus alergias: ${conAlergias[0]?.alergias}.`
+      : `Anotamos sus alergias: ${conAlergias.map((p) => `${p.nombre}, ${p.alergias}`).join('; ')}.`;
+    mostrarCierre(document.querySelector('[data-pantalla="confirmado"]'));
+  }
+
+  function pintarNoVan() {
+    document.getElementById('frase-no-van').textContent = `${segun('Te', 'Los')} vamos a extrañar, ${invitacion.grupo}.`;
+    mostrarCierre(document.querySelector('[data-pantalla="no-van"]'));
+  }
+
+  // Guarda y muestra el resultado. Si falla, deja la pantalla como estaba y lo dice; un toque doble se anota una vez
+  async function guardar(respuestas, idError) {
+    if (enviando) return;
+    enviando = true;
+    const error = document.getElementById(idError);
+    const botones = error.closest('[data-pantalla]').querySelectorAll('button');
+    botones.forEach((b) => { b.disabled = true; });
+    error.hidden = true;
+    try {
+      invitacion.invitados = await guardarRespuestas(respuestas);
+      borrador = null;
+      terminar(van().length ? 'confirmado' : 'no-van');
+    } catch (problema) {
+      if (problema.message === 'plazo cerrado') {
+        invitacion.abierto = false;
+        recienCerrado = true;
+        borrador = null;
+        terminar(pantallaInicial());
+      } else {
+        error.textContent = 'No pudimos guardar tu respuesta. Revisa tu conexión e inténtalo de nuevo.';
+        error.hidden = false;
+      }
+    } finally {
+      enviando = false;
+      botones.forEach((b) => { b.disabled = false; });
+    }
+  }
+
+  function empezarSi() {
+    const antes = invitacion.invitados.flatMap((p, n) => (p.viene === 'si' ? [n] : []));
+    borrador = {
+      vienen: new Set(antes.length ? antes : invitacion.invitados.map((_, n) => n)),
+      alergias: invitacion.invitados.map((p) => p.alergias || ''),
+    };
+    ir(uno() ? 'alergias' : 'quienes');
+  }
+
+  const respuestasDelBorrador = () => invitacion.invitados.map((p, n) => ({
+    nombre: p.nombre,
+    viene: borrador.vienen.has(n) ? 'si' : 'no',
+    alergias: (borrador.alergias[n] || '').trim(),
+  }));
+  const todosNo = () => invitacion.invitados.map((p) => ({ nombre: p.nombre, viene: 'no', alergias: '' }));
+
+  document.addEventListener('click', (e) => {
+    const accion = e.target.closest('[data-accion]')?.dataset.accion;
+    if (accion === 'si') empezarSi();
+    else if (accion === 'no') guardar(todosNo(), 'error-pregunta');
+    else if (accion === 'continuar') {
+      if (borrador.vienen.size) ir('alergias');
+      else guardar(todosNo(), 'error-quienes');
+    } else if (accion === 'confirmar') guardar(respuestasDelBorrador(), 'error-alergias');
+    else if (accion === 'volver') history.back();
+    else if (accion === 'cambiar') ir('invitacion');
+    else if (accion === 'reintentar') iniciar();
+  });
+
+  async function iniciar() {
+    carga = 'cargando';
+    mostrar('invitacion');
+    if (!codigo) {
+      carga = 'sin-enlace';
+    } else {
+      try {
+        invitacion = await cargarInvitacion();
+        carga = invitacion && invitacion.invitados.length ? 'lista' : 'no-encontrada';
+      } catch {
+        carga = 'sin-conexion';
+      }
+    }
+    history.replaceState({ pantalla: pantallaInicial(), n: 0 }, '');
+    mostrar(pantallaInicial());
+  }
+
+  iniciar();
+</script>
+</body>
+</html>

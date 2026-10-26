@@ -1,0 +1,48 @@
+/* Acomodo de las pantallas del prototipo 12. Colores, letras y espacios vienen del sistema (../../sistema/):
+   esta hoja solo ubica las piezas. */
+
+/* Andamio del taller, no es parte del diseño */
+.volver {
+  position: fixed;
+  top: var(--espacio-1);
+  right: var(--espacio-1);
+  z-index: 10;
+  padding: 4px var(--espacio-2);
+  font: var(--letra-nota);
+  color: var(--papel);
+  background: var(--tinta);
+  border-radius: var(--radio-pildora);
+  text-decoration: none;
+  opacity: .7;
+}
+
+/* Cada pantalla ocupa el alto del teléfono; los grupos se separan con aire, lo de adentro va junto */
+.pantalla {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+  min-height: 100svh;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--espacio-4) var(--espacio-3);
+}
+.centrada { align-items: center; text-align: center; }
+.junto { display: grid; gap: var(--espacio-1); justify-items: center; }
+.escena { width: 100%; max-width: 280px; }
+.texto { display: grid; gap: var(--espacio-2); }
+.pregunta { display: grid; gap: var(--espacio-2); justify-items: center; width: 100%; }
+.botones { display: grid; grid-template-columns: 1fr 1fr; gap: var(--espacio-1); width: 100%; }
+.botones .boton { width: 100%; padding: 0 var(--espacio-2); }
+
+/* Pasos: la pregunta arriba, los botones abajo */
+.paso { gap: var(--espacio-3); }
+.encabezado-paso { display: grid; gap: var(--espacio-1); }
+.campos { display: grid; gap: var(--espacio-2); }
+.acciones { display: grid; gap: var(--espacio-1); margin-top: auto; }
+.acciones .boton { width: 100%; }
+
+/* Finales */
+.brindis { width: 200px; }
+.datos { width: 100%; text-align: left; }
+.datos .aviso { margin-top: var(--espacio-1); }
+.final .acciones { width: 100%; max-width: 320px; }

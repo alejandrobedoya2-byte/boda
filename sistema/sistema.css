@@ -1,0 +1,141 @@
+/* Sistema de la web de la boda: la única fuente de color, letra, espacio y piezas.
+   Las páginas lo enlazan y no escriben colores, letras, tamaños de letra ni espacios propios: solo acomodan.
+   Las reglas de uso, a la vista junto a cada pieza: index.html, en esta misma carpeta. */
+
+@import url("https://fonts.googleapis.com/css2?family=Handlee&family=Jost:wght@400;500&display=swap");
+
+:root {
+  /* Color: la paleta de quien dirige y lo que sale de mezclarla */
+  --papel: #f5f0ec;        /* fondo de la página */
+  --tinta: #141414;        /* todo el texto, por defecto */
+  --coral: #fe595f;        /* acento: display y la acción principal */
+  --tinta-suave: color-mix(in srgb, var(--tinta) 68%, var(--papel)); /* solo para nota */
+  --superficie: color-mix(in srgb, #fff 60%, var(--papel));          /* tarjetas */
+  --relleno: color-mix(in srgb, var(--tinta) 6%, var(--papel));       /* píldoras y campos */
+  --coral-claro: color-mix(in srgb, var(--coral) 14%, var(--papel));  /* solo avisos */
+  --linea: color-mix(in srgb, var(--tinta) 12%, var(--papel));        /* separadores */
+
+  /* Letra: cuatro estilos */
+  --letra-display: 400 40px/1.3 "Handlee", "Segoe Print", cursive;
+  --letra-titulo: 500 20px/1.3 "Jost", system-ui, sans-serif;
+  --letra-cuerpo: 400 16px/1.6 "Jost", system-ui, sans-serif;
+  --letra-nota: 400 14px/1.5 "Jost", system-ui, sans-serif;
+
+  /* Espacio: cuatro pasos */
+  --espacio-1: 8px;
+  --espacio-2: 16px;
+  --espacio-3: 24px;
+  --espacio-4: 48px;
+
+  /* Esquinas */
+  --radio-campo: 12px;
+  --radio-tarjeta: 24px;
+  --radio-pildora: 999px;
+}
+
+/* Base */
+* { box-sizing: border-box; }
+[hidden] { display: none !important; } /* que ningún estilo vuelva a mostrar lo oculto */
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--papel); color: var(--tinta); font: var(--letra-cuerpo); }
+p, h1, h2, h3, figure, dl, dd { margin: 0; }
+a { color: inherit; }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--tinta); outline-offset: 3px; }
+
+/* Los cuatro estilos de letra */
+.display { font: var(--letra-display); color: var(--coral); }
+.titulo { font: var(--letra-titulo); }
+.cuerpo { font: var(--letra-cuerpo); }
+.nota { font: var(--letra-nota); color: var(--tinta-suave); }
+
+/* Piezas */
+
+/* Botón: principal (coral con letra en tinta, uno por pantalla) o secundario (contorno) */
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 var(--espacio-3);
+  font: var(--letra-cuerpo);
+  text-decoration: none;
+  border-radius: var(--radio-pildora);
+  cursor: pointer;
+}
+.boton-principal { width: 100%; color: var(--tinta); background: var(--coral); border: 0; } /* tinta sobre coral: 6:1; blanco: 3:1 */
+.boton-principal:disabled { opacity: .6; cursor: wait; }
+.boton-secundario { color: var(--tinta); background: transparent; border: 1px solid var(--tinta); }
+
+/* Enlace de texto: para acciones menores, como cambiar una respuesta */
+.enlace {
+  padding: 0;
+  font: var(--letra-nota);
+  color: var(--tinta);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+/* Píldora: un dato corto que acompaña, como la cuenta regresiva */
+.pildora {
+  display: inline-block;
+  padding: 4px 14px;
+  font: var(--letra-nota);
+  color: var(--tinta);
+  background: var(--relleno);
+  border-radius: var(--radio-pildora);
+}
+.pildora:empty { display: none; }
+
+/* Tarjeta: un bloque que se lee junto */
+.tarjeta { padding: var(--espacio-3); background: var(--superficie); border-radius: var(--radio-tarjeta); }
+
+/* Aviso: lo que no se puede pasar por alto. Uno por tarjeta, como mucho */
+.aviso {
+  padding: 12px 14px;
+  font: var(--letra-nota);
+  color: var(--tinta);
+  background: var(--coral-claro);
+  border-radius: var(--radio-campo);
+}
+
+/* Lista de datos: etiqueta en nota, valor en cuerpo, separados por una línea */
+.datos > div { display: grid; gap: 2px; padding: var(--espacio-2) 0; border-top: 1px solid var(--linea); }
+.datos > div:first-child { padding-top: 0; border-top: 0; }
+.datos > div:last-child { padding-bottom: 0; }
+.datos dt { font: var(--letra-nota); color: var(--tinta-suave); }
+.datos dd .nota { display: block; }
+
+/* Campo: etiqueta en nota arriba, el campo relleno abajo */
+.campo { display: grid; gap: 6px; }
+.campo > span { font: var(--letra-nota); color: var(--tinta-suave); }
+.campo input {
+  width: 100%;
+  padding: 12px 14px;
+  font: var(--letra-cuerpo);
+  background: var(--relleno);
+  border: 1px solid transparent;
+  border-radius: var(--radio-campo);
+}
+.campo input:focus { outline: none; border-color: var(--tinta); }
+.campo input::placeholder { color: var(--tinta-suave); opacity: .7; }
+
+/* Segmentado: elegir una opción entre pocas, como Sí o No */
+.segmentado { display: inline-flex; flex: none; padding: 3px; border: 1px solid var(--tinta); border-radius: var(--radio-pildora); }
+.segmentado label { position: relative; cursor: pointer; }
+.segmentado input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.segmentado span { display: block; min-width: 56px; padding: 6px 18px; text-align: center; border-radius: var(--radio-pildora); }
+.segmentado input:checked + span { color: var(--papel); background: var(--tinta); }
+.segmentado input:focus-visible + span { outline: 2px solid var(--tinta); outline-offset: 2px; }
+
+/* Casilla: elegir varias opciones a la vez, como quiénes vienen. Se toca toda la fila */
+.casilla { display: flex; align-items: center; gap: 12px; padding: var(--espacio-2) 0; border-top: 1px solid var(--linea); cursor: pointer; }
+.casilla:last-child { border-bottom: 1px solid var(--linea); }
+.casilla input { flex: none; width: 22px; height: 22px; margin: 0; accent-color: var(--tinta); cursor: pointer; }
+
+/* Ilustración: su fondo claro se aclara hasta el blanco y se multiplica con lo de atrás,
+   así desaparece y el dibujo queda como impreso sobre el papel o la tarjeta */
+.ilustracion { display: block; width: 100%; height: auto; filter: brightness(1.06); mix-blend-mode: multiply; }
